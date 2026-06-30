@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   ZYVORA DESIGN SYSTEM
+   Token-based color system using HSL CSS custom properties.
+   Supports: Light Mode | Dark Mode | System Theme
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* --- Neutral base palette (Light Mode) --- */
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+
+    /* --- Primary: Zyvora Electric Blue --- */
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    /* --- Secondary: Soft neutral --- */
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+
+    /* --- Muted: Subdued backgrounds --- */
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+
+    /* --- Accent: Energetic highlight --- */
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+
+    /* --- Destructive: Error red --- */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* --- Structural --- */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
+
+    /* --- Zyvora Brand Scale (Electric Blue) --- */
+    --brand-50: 213 100% 97%;
+    --brand-100: 214 95% 93%;
+    --brand-200: 213 97% 87%;
+    --brand-300: 212 96% 78%;
+    --brand-400: 213 94% 68%;
+    --brand-500: 217 91% 60%;
+    --brand-600: 221 83% 53%;
+    --brand-700: 224 76% 48%;
+    --brand-800: 226 71% 40%;
+    --brand-900: 224 64% 33%;
+
+    /* --- AI Coach accent (Emerald) --- */
+    --coach: 158 64% 52%;
+    --coach-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    /* --- Dark Mode base palette --- */
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+
+    /* --- Primary dark: Slightly lighter electric blue for contrast --- */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 217 91% 60%;
+
+    /* --- Brand stays consistent in dark mode --- */
+    --brand-50: 224 64% 33%;
+    --brand-100: 226 71% 40%;
+    --brand-200: 224 76% 48%;
+    --brand-300: 221 83% 53%;
+    --brand-400: 217 91% 60%;
+    --brand-500: 213 94% 68%;
+    --brand-600: 212 96% 78%;
+    --brand-700: 213 97% 87%;
+    --brand-800: 214 95% 93%;
+    --brand-900: 213 100% 97%;
+
+    /* --- Coach accent dark --- */
+    --coach: 158 64% 52%;
+    --coach-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus ring override for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Custom scrollbar (dark mode friendly) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+}
+
+@layer utilities {
+  /* Typography utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Glass morphism */
+  .glass {
+    @apply border border-white/20 bg-white/10 backdrop-blur-md;
+  }
+
+  .glass-dark {
+    @apply border border-white/10 bg-black/20 backdrop-blur-md;
+  }
+
+  /* Gradient text utility */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 to-brand-300 bg-clip-text text-transparent;
+  }
+
+  /* Zyvora brand gradient background */
+  .gradient-brand {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--brand-600)) 0%,
+      hsl(var(--brand-400)) 100%
+    );
+  }
+}
