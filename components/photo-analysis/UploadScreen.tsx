@@ -7,6 +7,7 @@ import { staggerParent, fadeUp } from '@/lib/motion'
 import { UploadDropzone } from './UploadDropzone'
 import { UploadProgress } from './UploadProgress'
 import { usePhotoAnalysis } from '@/contexts/photo-analysis-context'
+import { usePhotoUpload } from '@/hooks/usePhotoUpload'
 import type { PhotoViewType, PhotoFile } from '@/types/photo-analysis'
 
 interface UploadScreenProps {
@@ -17,36 +18,37 @@ interface UploadScreenProps {
 const VIEW_ORDER: PhotoViewType[] = ['front', 'side', 'back']
 const VIEW_LABELS: Record<PhotoViewType, string> = { front: 'Front', side: 'Side', back: 'Back' }
 
-interface UploadState {
-  progress: number
-  complete: boolean
-}
-
 export function UploadScreen({ onContinue, onBack }: UploadScreenProps) {
   const { state, setPhoto, setActiveView } = usePhotoAnalysis()
   const { data } = state
-  const [uploading, setUploading] = useState<Partial<Record<PhotoViewType, UploadState>>>({})
+  // Per-view upload state tracked locally so tabs are independent
+  const [perViewStatus, setPerViewStatus] = useState<Partial<Record<PhotoViewType, { progress: number; label: string; complete: boolean }>>>({})
+  const { upload } = usePhotoUpload()
 
   const handleFileSelected = useCallback(async (viewType: PhotoViewType, file: File) => {
-    // Simulate staged progress (no real upload in Sprint 3B)
-    setUploading((prev) => ({ ...prev, [viewType]: { progress: 0, complete: false } }))
+    if (!file.name) return   // guard against empty File from Replace button
 
-    const steps = [15, 35, 55, 75, 90, 100]
-    for (const step of steps) {
-      await new Promise((r) => setTimeout(r, 120))
-      setUploading((prev) => ({ ...prev, [viewType]: { progress: step, complete: false } }))
-    }
+    setPerViewStatus((prev) => ({ ...prev, [viewType]: { progress: 0, label: 'Preparing...', complete: false } }))
 
-    const objectUrl = URL.createObjectURL(file)
-    const photo: PhotoFile = {
-      viewType,
-      objectUrl,
-      fileName: file.name,
-      fileSizeKb: Math.round(file.size / 1024),
+    const result = await upload(file, viewType, (event) => {
+      setPerViewStatus((prev) => ({
+        ...prev,
+        [viewType]: { progress: event.progress, label: event.label, complete: event.status === 'complete' },
+      }))
+    })
+
+    if (result) {
+      const objectUrl = URL.createObjectURL(file)
+      const photo: PhotoFile = {
+        viewType,
+        objectUrl,
+        fileName: file.name,
+        fileSizeKb: Math.round(file.size / 1024),
+        uploadResult: result,
+      }
+      setPhoto(viewType, photo)
     }
-    setPhoto(viewType, photo)
-    setUploading((prev) => ({ ...prev, [viewType]: { progress: 100, complete: true } }))
-  }, [setPhoto])
+  }, [upload, setPhoto])
 
   const uploadedCount = Object.keys(data.photos).length
   const canContinue = uploadedCount >= 1  // At least 1 photo required; all 3 ideal
@@ -132,12 +134,12 @@ export function UploadScreen({ onContinue, onBack }: UploadScreenProps) {
                 </div>
               </div>
             </div>
-          ) : uploading[data.activeView] ? (
+          ) : perViewStatus[data.activeView] ? (
             <div className="py-4">
               <UploadProgress
-                progress={uploading[data.activeView]!.progress}
-                fileName={`${VIEW_LABELS[data.activeView]}_view_photo`}
-                isComplete={uploading[data.activeView]!.complete}
+                progress={perViewStatus[data.activeView]!.progress}
+                fileName={perViewStatus[data.activeView]!.label || `${VIEW_LABELS[data.activeView]}_view_photo`}
+                isComplete={perViewStatus[data.activeView]!.complete}
               />
             </div>
           ) : (

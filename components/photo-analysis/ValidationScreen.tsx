@@ -7,7 +7,8 @@ import { staggerParent, fadeUp } from '@/lib/motion'
 import { ReadinessScore } from './ReadinessScore'
 import { ValidationChecklist } from './ValidationChecklist'
 import { usePhotoAnalysis } from '@/contexts/photo-analysis-context'
-import { mockValidatePhoto } from '@/types/photo-analysis'
+import { validatePhotoQuality } from '@/lib/ai/services'
+import type { ImageQualityMetrics } from '@/lib/ai/types/vision'
 import type { PhotoViewType, ValidationResult } from '@/types/photo-analysis'
 
 interface ValidationScreenProps {
@@ -18,6 +19,30 @@ interface ValidationScreenProps {
 
 const VIEW_LABELS: Record<PhotoViewType, string> = { front: 'Front', side: 'Side', back: 'Back' }
 
+/**
+ * Adapter: converts ImageQualityMetrics (from the vision provider) into the
+ * ValidationResult shape expected by ReadinessScore + ValidationChecklist.
+ * This keeps the UI components stable across Sprint 3B → 4A.
+ */
+function metricsToValidationResult(metrics: ImageQualityMetrics): ValidationResult {
+  const checks: ValidationResult['checks'] = [
+    { id: 'lighting',   label: 'Lighting',         status: metrics.lightingScore   >= 70 ? 'pass' : metrics.lightingScore   >= 50 ? 'warn' : 'fail' },
+    { id: 'sharpness',  label: 'Image sharpness',  status: metrics.sharpnessScore  >= 70 ? 'pass' : metrics.sharpnessScore  >= 50 ? 'warn' : 'fail' },
+    { id: 'resolution', label: 'Resolution',       status: metrics.resolutionScore >= 70 ? 'pass' : metrics.resolutionScore >= 50 ? 'warn' : 'fail' },
+    { id: 'background', label: 'Background',       status: metrics.backgroundScore >= 70 ? 'pass' : metrics.backgroundScore >= 50 ? 'warn' : 'fail',
+      detail: metrics.backgroundScore < 70 ? 'A plain wall works best' : undefined },
+    { id: 'pose',       label: 'Pose / Camera angle', status: metrics.poseScore    >= 70 ? 'pass' : metrics.poseScore       >= 50 ? 'warn' : 'fail' },
+    { id: 'visibility', label: 'Full body visible', status: metrics.overallScore   >= 75 ? 'pass' : 'warn' },
+  ]
+
+  return {
+    score:          metrics.overallScore,
+    checks,
+    overallStatus:  metrics.overallScore >= 75 ? 'pass' : metrics.overallScore >= 50 ? 'warn' : 'fail',
+    improvementTip: metrics.warnings[0],
+  }
+}
+
 export function ValidationScreen({ onContinue, onBack, onRetake }: ValidationScreenProps) {
   const { state, setPhoto } = usePhotoAnalysis()
   const { data } = state
@@ -27,7 +52,7 @@ export function ValidationScreen({ onContinue, onBack, onRetake }: ValidationScr
   const [results, setResults] = useState<Partial<Record<PhotoViewType, ValidationResult>>>({})
   const [isValidating, setIsValidating] = useState(true)
 
-  // Run mock validation for all uploaded photos on mount
+  // Run AI quality validation for all uploaded photos on mount
   useEffect(() => {
     const run = async () => {
       setIsValidating(true)
@@ -35,11 +60,16 @@ export function ValidationScreen({ onContinue, onBack, onRetake }: ValidationScr
       for (const view of uploadedViews) {
         const photo = data.photos[view]
         if (photo) {
-          await new Promise((r) => setTimeout(r, 600))   // Simulate async quality check
-          const result = mockValidatePhoto(photo.objectUrl)
-          newResults[view] = result
-          // Store result back onto photo object
-          setPhoto(view, { ...photo, validation: result })
+          try {
+            const metrics: ImageQualityMetrics = await validatePhotoQuality(photo.objectUrl)
+            const result = metricsToValidationResult(metrics)
+            newResults[view] = result
+            // Store quality metrics and legacy validation result on the photo
+            setPhoto(view, { ...photo, validation: result, qualityMetrics: metrics })
+          } catch {
+            // Fallback: if provider fails, mark as warn so the user can still proceed
+            newResults[view] = { score: 70, checks: [], overallStatus: 'warn' }
+          }
         }
       }
       setResults(newResults)

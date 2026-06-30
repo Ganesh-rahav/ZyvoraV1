@@ -1,4 +1,12 @@
 // ─── Photo Analysis Types ──────────────────────────────────────────────────────
+// Sprint 4A: extended with production upload and analysis result types.
+
+import type { UploadResult } from '@/lib/ai/types/upload'
+import type { PhysiqueAnalysis, ImageQualityMetrics } from '@/lib/ai/types/vision'
+
+// Re-export for convenience
+export type { UploadResult } from '@/lib/ai/types/upload'
+export type { PhysiqueAnalysis, ImageQualityMetrics } from '@/lib/ai/types/vision'
 
 export type PhotoViewType = 'front' | 'side' | 'back'
 
@@ -20,10 +28,18 @@ export interface ValidationResult {
 
 export interface PhotoFile {
   viewType: PhotoViewType
-  objectUrl: string              // blob: URL — never uploaded anywhere in Sprint 3B
+  /** blob: URL for display — created by URL.createObjectURL */
+  objectUrl: string
   fileName: string
   fileSizeKb: number
+  /** Populated after client-side image validation (Sprint 3B) */
   validation?: ValidationResult
+  /** Populated after production upload pipeline completes (Sprint 4A) */
+  uploadResult?: UploadResult
+  /** Populated after vision analysis completes (Sprint 4A) */
+  analysis?: PhysiqueAnalysis
+  /** Populated after quality validation via vision provider (Sprint 4A) */
+  qualityMetrics?: ImageQualityMetrics
 }
 
 export type PhotoAnalysisStep =
@@ -50,6 +66,8 @@ export interface PhotoAnalysisData {
   activeView: PhotoViewType
   skipped: boolean
   preparationComplete: boolean
+  /** Sprint 4A: keyed by viewType — populated as each photo is analysed */
+  analysisResults: Partial<Record<PhotoViewType, PhysiqueAnalysis>>
 }
 
 export interface PhotoAnalysisState {

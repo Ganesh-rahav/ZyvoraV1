@@ -14,6 +14,7 @@ import type {
   PhotoAnalysisStep,
   PhotoFile,
   PhotoViewType,
+  PhysiqueAnalysis,
 } from '@/types/photo-analysis'
 import { PHOTO_ANALYSIS_STEPS } from '@/types/photo-analysis'
 
@@ -28,6 +29,7 @@ type Action =
   | { type: 'SET_SKIPPED'; value: boolean }
   | { type: 'SET_PROCESSING'; value: boolean }
   | { type: 'SET_DONE' }
+  | { type: 'SET_ANALYSIS_RESULT'; viewType: PhotoViewType; result: PhysiqueAnalysis }
 
 // ─── Initial state ────────────────────────────────────────────────────────────
 const INITIAL_DATA: PhotoAnalysisData = {
@@ -35,6 +37,7 @@ const INITIAL_DATA: PhotoAnalysisData = {
   activeView: 'front',
   skipped: false,
   preparationComplete: false,
+  analysisResults: {},
 }
 
 const INITIAL_STATE: PhotoAnalysisState = {
@@ -89,6 +92,15 @@ function reducer(state: PhotoAnalysisState, action: Action): PhotoAnalysisState 
     case 'SET_DONE':
       return { ...state, isDone: true, data: { ...state.data, preparationComplete: true } }
 
+    case 'SET_ANALYSIS_RESULT':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          analysisResults: { ...state.data.analysisResults, [action.viewType]: action.result },
+        },
+      }
+
     default:
       return state
   }
@@ -106,6 +118,7 @@ interface PhotoAnalysisContextValue {
   setSkipped: (value: boolean) => void
   setProcessing: (value: boolean) => void
   setDone: () => void
+  setAnalysisResult: (viewType: PhotoViewType, result: PhysiqueAnalysis) => void
 }
 
 const PhotoAnalysisContext = createContext<PhotoAnalysisContextValue | null>(null)
@@ -180,9 +193,13 @@ export function PhotoAnalysisProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const setAnalysisResult = useCallback((viewType: PhotoViewType, result: PhysiqueAnalysis) => {
+    dispatch({ type: 'SET_ANALYSIS_RESULT', viewType, result })
+  }, [])
+
   const value = useMemo(
-    () => ({ state, nextStep, prevStep, setStep, setPhoto, removePhoto, setActiveView, setSkipped, setProcessing, setDone }),
-    [state, nextStep, prevStep, setStep, setPhoto, removePhoto, setActiveView, setSkipped, setProcessing, setDone]
+    () => ({ state, nextStep, prevStep, setStep, setPhoto, removePhoto, setActiveView, setSkipped, setProcessing, setDone, setAnalysisResult }),
+    [state, nextStep, prevStep, setStep, setPhoto, removePhoto, setActiveView, setSkipped, setProcessing, setDone, setAnalysisResult]
   )
 
   return (
