@@ -25,7 +25,7 @@ export function PreparationStep() {
   useEffect(() => {
     if (shouldReduceMotion) {
       setActiveIdx(PREPARATION_STEPS.length - 1)
-      const t = setTimeout(() => { setDone(true); router.push('/dashboard') }, 1200)
+      const t = setTimeout(() => { setDone(true); router.push('/photo-analysis') }, 1200)
       return () => clearTimeout(t)
     }
 
@@ -41,7 +41,7 @@ export function PreparationStep() {
       }
       if (!cancelled) {
         setDone(true)
-        setTimeout(() => router.push('/dashboard'), 600)
+        setTimeout(() => router.push('/photo-analysis'), 600)
       }
     }
 
