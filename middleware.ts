@@ -1,15 +1,30 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
+
+// TODO(auth-sprint): Supabase authentication middleware is temporarily bypassed
+// to allow Vercel deployment before environment variables are configured.
+// Re-enable by restoring the original implementation below when the
+// Authentication sprint begins.
+//
+// Original implementation (DO NOT DELETE):
+// ─────────────────────────────────────────────────────────────────────────────
+// import { type NextRequest } from 'next/server'
+// import { updateSession } from '@/lib/supabase/middleware'
+//
+// export async function middleware(request: NextRequest) {
+//   return await updateSession(request)
+// }
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Next.js Middleware
- * Runs on every matched request before it reaches the page/route handler.
- * Responsibilities:
- *  1. Refresh Supabase auth session cookies (mandatory for @supabase/ssr)
- *  2. Enforce route-level authentication guards
+ * TEMPORARY PASSTHROUGH MIDDLEWARE
+ * All routes pass through unconditionally.
+ * No session refresh, no route guards, no redirects.
+ * Replace this function body with the original above once Supabase
+ * environment variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
+ * are set in Vercel project settings.
  */
-export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+export function middleware(_request: NextRequest) {
+  return NextResponse.next()
 }
 
 export const config = {

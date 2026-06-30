@@ -6,8 +6,21 @@ import type { Database } from '@/types/database'
 /**
  * Supabase middleware client — refreshes session cookies on every
  * request so that auth state is never stale. Required by @supabase/ssr.
+ *
+ * TODO(auth-sprint): The env-var guard below is a temporary safety net while
+ * NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are not yet
+ * configured in Vercel. Remove the guard once the Authentication sprint is
+ * complete and credentials are deployed.
  */
 export async function updateSession(request: NextRequest) {
+  // TODO(auth-sprint): Remove this guard when Supabase env vars are available.
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
