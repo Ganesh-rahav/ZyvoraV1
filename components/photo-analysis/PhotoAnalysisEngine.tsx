@@ -55,8 +55,8 @@ export function PhotoAnalysisEngine() {
   }, [setStep])
 
   const handleDone = useCallback(() => {
-    // Sprint 4: navigate to AI Analysis screen
-    router.push('/dashboard')
+    // Sprint 5B: navigate to the Coaching Experience (CEE)
+    router.push('/coaching-session')
   }, [router])
 
   const handleSkip = useCallback(() => {
